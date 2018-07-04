@@ -49,7 +49,9 @@ class App extends Component {
         <Search
           value={searchTerm}
           onChange={this.onSearchChange}
-        />
+        >
+          Search:
+        </Search>
         <Table
           list={list}
           pattern={searchTerm}
@@ -62,10 +64,11 @@ class App extends Component {
 
 class Search extends Component {
   render() {
-    const { onChange, value } = this.props;
+    const { onChange, value, children } = this.props;
 
     return (
       <form>
+        {children}
         <input
           type="text"
           onChange={onChange}
@@ -90,18 +93,33 @@ class Table extends Component {
             <span>{item.num_components}</span>
             <span>{item.points}</span>
             <span>
-              <button
+              <Button
                 // higher order function that passes objectID param
                 onClick={() => onDismiss(item.objectID)}
-                type="button"
               >
                 Dismiss
-              </button>
+              </Button>
             </span>
           </div>
         )}
       </div>
-    )
+    );
+  }
+}
+
+class Button extends Component {
+  render() {
+    const { children, onClick, className='' } = this.props;
+
+    return (
+      <button
+        className={className}
+        onClick={onClick}
+        type="button"
+      >
+        { children }
+      </button>
+    );
   }
 }
 
