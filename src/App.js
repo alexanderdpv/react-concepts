@@ -12,6 +12,10 @@ const list = [
   }
 ];
 
+const isSearched = (searchTerm) => (item) => {
+  return item.title.toLowerCase().includes(searchTerm.toLowerCase());
+}
+
 class App extends Component {
   constructor(props) {
     super(props); // Sets this.props to be used in constructor
@@ -38,6 +42,8 @@ class App extends Component {
   }
 
   render() {
+    const { list, searchTerm } = this.state;
+
     return (
       <div className="App">
         <form>
@@ -46,7 +52,7 @@ class App extends Component {
             onChange={this.onSearchChange}/>
         </form>
 
-        {this.state.list.map((item) => {
+        {list.filter(isSearched(searchTerm)).map((item) => {
           return (
             <div key="{item.objectID}">
               <span>
