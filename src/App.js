@@ -18,9 +18,11 @@ class App extends Component {
 
     this.state = {
       list: list,
+      searchTerm: ''
     };
 
     this.onDismiss = this.onDismiss.bind(this);
+    this.onSearchChange = this.onSearchChange.bind(this);
   }
 
   // Removes object from list
@@ -31,14 +33,25 @@ class App extends Component {
     this.setState({ list : updatedList });
   }
 
+  onSearchChange(event) {
+    this.setState({ searchTerm : event.target.value });
+  }
+
   render() {
     return (
       <div className="App">
+        <form>
+          <input
+            type="text"
+            onChange={this.onSearchChange}/>
+        </form>
+
         {this.state.list.map((item) => {
           return (
             <div key="{item.objectID}">
               <span>
                 <button
+                  // higher order function that passes objectID param
                   onClick = {() => this.onDismiss(item.objectID)}
                   type = "button"
                 >
