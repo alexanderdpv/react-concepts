@@ -46,33 +46,62 @@ class App extends Component {
 
     return (
       <div className="App">
-        <form>
-          <input
-            type="text"
-            onChange={this.onSearchChange}
-            value={searchTerm}/>
-        </form>
-
-        {list.filter(isSearched(searchTerm)).map((item) => {
-          return (
-            <div key="{item.objectID}">
-              <span>
-                <button
-                  // higher order function that passes objectID param
-                  onClick = {() => this.onDismiss(item.objectID)}
-                  type = "button"
-                >
-                  Dismiss
-                </button>
-              </span>
-              <span>{item.author}</span>
-              <span>{item.num_components}</span>
-              <span>{item.points}</span>
-            </div>
-          );
-        })}
+        <Search
+          value={searchTerm}
+          onChange={this.onSearchChange}
+        />
+        <Table
+          list={list}
+          pattern={searchTerm}
+          onDismiss={this.onDismiss}
+        />
       </div>
     );
+  }
+}
+
+class Search extends Component {
+  render() {
+    const { onChange, value } = this.props;
+
+    return (
+      <form>
+        <input
+          type="text"
+          onChange={onChange}
+          value={value}/>
+      </form>
+    )
+  }
+}
+
+class Table extends Component {
+  render() {
+    const { list, pattern, onDismiss } = this.props;
+
+    return (
+      <div>
+        {list.filter(isSearched(pattern)).map((item) =>
+          <div key="{item.objectID}">
+            <span>
+              <a href="{item.url}">{item.title}</a>
+            </span>
+            <span>{item.author}</span>
+            <span>{item.num_components}</span>
+            <span>{item.points}</span>
+            <span>
+              <button
+                // higher order function that passes objectID param
+                onClick={() => onDismiss(item.objectID)}
+                type="button"
+              >
+                Dismiss
+              </button>
+            </span>
+          </div>
+        )}
+      </div>
+    )
   }
 }
 
