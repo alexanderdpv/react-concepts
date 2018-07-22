@@ -1,6 +1,28 @@
 import React, { Component } from 'react';
 import './App.css';
 
+const DEFAULT_QUERY = 'redux';
+const DEFAULT_HPP = '100';
+
+const PATH_BASE = 'https://hn.algolia.com/api/v1';
+const PATH_SEARCH = '/search';
+const PARAM_SEARCH = 'query=';
+const PARAM_PAGE = 'page=';
+const PARAM_HPP = 'hitsPerPage=';
+
+// Inline styles
+const largeColumn = {
+  width: '40%',
+}
+
+const midColumn = {
+  width: '30%',
+}
+
+const smallColumn = {
+  width: '10%',
+}
+
 const list = [
   {
     title: 'React',
@@ -12,115 +34,152 @@ const list = [
   }
 ];
 
-const isSearched = (searchTerm) => (item) => {
-  return item.title.toLowerCase().includes(searchTerm.toLowerCase());
-}
-
 class App extends Component {
   constructor(props) {
     super(props); // Sets this.props to be used in constructor
 
     this.state = {
-      list: list,
-      searchTerm: ''
+      result: null,
+      searchTerm: DEFAULT_QUERY,
     };
 
+    this.setSearchTopStories = this.setSearchTopStories.bind(this);
+    this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
+  }
+
+  setSearchTopStories(result) {
+    const { hits, page } = result;
+
+    const oldHits = page !== 0 ? this.state.result.hits : [];
+    const updatedHits = [...oldHits, ...hits];
+
+    this.setState({
+      result: { hits: updatedHits, page }
+    });
+  }
+
+  fetchSearchTopStories(searchTerm, page = 0) {
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)
+      .then(response => response.json())
+      .then(result => this.setSearchTopStories(result))
+      .catch(error => error);
+  }
+
+  componentDidMount() {
+    const { searchTerm } = this.state;
+
+    this.fetchSearchTopStories(searchTerm);
   }
 
   // Removes object from list
   onDismiss(id) {
     const isNotId = (item) => item.objectID !== id;
-    const updatedList = this.state.list.filter(isNotId);
+    const updatedHits = this.state.result.hits.filter(isNotId);
 
-    this.setState({ list : updatedList });
+    this.setState({
+      result: { ...this.state.result, hits: updatedHits }
+    });
   }
 
   onSearchChange(event) {
     this.setState({ searchTerm : event.target.value });
   }
 
+  onSearchSubmit(event) {
+    const { searchTerm } = this.state;
+    this.fetchSearchTopStories(searchTerm);
+    event.preventDefault();
+  }
+
   render() {
-    const { list, searchTerm } = this.state;
+    const { searchTerm, result } = this.state;
+    const page = (result && result.page) || 0;
 
     return (
-      <div className="App">
-        <Search
-          value={searchTerm}
-          onChange={this.onSearchChange}
-        >
-          Search:
-        </Search>
-        <Table
-          list={list}
-          pattern={searchTerm}
-          onDismiss={this.onDismiss}
-        />
+      <div className="page">
+        <div className="interactions">
+          <Search
+            value={searchTerm}
+            onChange={this.onSearchChange}
+            onSubmit={this.onSearchSubmit}
+          >
+            Search:
+          </Search>
+          { result ?
+            <div>
+              <Table
+                list={result.hits}
+                onDismiss={this.onDismiss}
+              />
+              <div className="interactions">
+                <Button onClick={() => this.fetchSearchTopStories(searchTerm, page + 1)}>
+                  More
+                </Button>
+              </div>
+            </div>
+          : null
+          }
+        </div>
       </div>
     );
   }
 }
 
-class Search extends Component {
-  render() {
-    const { onChange, value, children } = this.props;
+// Functional stateless component
+const Search = ({ children, value, onChange, onSubmit }) =>
+  <form onSubmit={onSubmit}>
+    {children}
+    <input
+      type="text"
+      value={value}
+      onChange={onChange}
+      />
+    <button type="submit">
+      {children}
+    </button>
+  </form>
 
-    return (
-      <form>
-        {children}
-        <input
-          type="text"
-          onChange={onChange}
-          value={value}/>
-      </form>
-    )
-  }
-}
-
-class Table extends Component {
-  render() {
-    const { list, pattern, onDismiss } = this.props;
-
-    return (
-      <div>
-        {list.filter(isSearched(pattern)).map((item) =>
-          <div key="{item.objectID}">
-            <span>
-              <a href="{item.url}">{item.title}</a>
-            </span>
-            <span>{item.author}</span>
-            <span>{item.num_components}</span>
-            <span>{item.points}</span>
-            <span>
-              <Button
-                // higher order function that passes objectID param
-                onClick={() => onDismiss(item.objectID)}
-              >
-                Dismiss
-              </Button>
-            </span>
-          </div>
-        )}
+// Functional stateless component
+const Table = ({ list, onDismiss }) =>
+  <div className="table">
+    {list.map((item) =>
+      <div key="{item.objectID}" className="table-row">
+        <span style={largeColumn}>
+          <a href={item.url}>{item.title}</a>
+        </span>
+        <span style={midColumn}>
+          {item.author}
+        </span>
+        <span style={smallColumn}>
+          {item.num_components}
+        </span>
+        <span style={smallColumn}>
+          {item.points}
+        </span>
+        <span style={smallColumn}>
+          <Button
+            // higher order function that passes objectID param
+            onClick={() => onDismiss(item.objectID)}
+            className="button-inline"
+          >
+            Dismiss
+          </Button>
+        </span>
       </div>
-    );
-  }
-}
+    )}
+  </div>
 
-class Button extends Component {
-  render() {
-    const { children, onClick, className='' } = this.props;
-
-    return (
-      <button
-        className={className}
-        onClick={onClick}
-        type="button"
-      >
-        { children }
-      </button>
-    );
-  }
-}
+// Functional stateless component
+const Button = ({className='', onClick, children}) =>
+  <button
+    className={className}
+    onClick={onClick}
+    type="button"
+  >
+    { children }
+  </button>
 
 export default App;
