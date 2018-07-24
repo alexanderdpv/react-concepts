@@ -151,6 +151,13 @@ const Search = ({ children, value, onChange, onSubmit }) =>
     </button>
   </form>
 
+Search.propTypes = {
+  children: PropTypes.node,
+  value: PropTypes.string,
+  onChange: PropTypes.func,
+  onSubmit: PropTypes.func,
+}
+
 // Functional stateless component
 const Table = ({ list, onDismiss }) =>
   <div className="table">
